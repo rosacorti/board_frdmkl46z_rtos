@@ -72,6 +72,12 @@ void uart_rtos_init(void)
 	qSend = xQueueCreate(16, sizeof(uint8_t));
 	qRecv = xQueueCreate(16, sizeof(uint8_t));
 
+#ifdef DEBUG
+    vQueueAddToRegistry( qSend, "uartTxQ" );
+    vQueueAddToRegistry( qRecv, "uartRxQ" );
+#endif
+
+
 	CLOCK_SetLpsci0Clock(0x1U);
 
 	/* PORTA1 (pin 35) is configured as UART0_RX */
