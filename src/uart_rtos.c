@@ -159,7 +159,6 @@ int32_t uart_rtos_envDatos(uint8_t *pBuf, int32_t size, uint32_t blockTime)
     		txHasEnded = false;
     		LPSCI_EnableInterrupts(UART0, kLPSCI_TxDataRegEmptyInterruptEnable);
     	}
-    	waitTick = 0;
     	ret++;
     }
 
