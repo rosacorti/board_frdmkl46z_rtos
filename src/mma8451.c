@@ -181,6 +181,7 @@ static void mma8451_write_reg(uint8_t addr, uint8_t data)
 /*==================[internal data definition]===============================*/
 
 static SemaphoreHandle_t xSemINTAcc;
+static SemaphoreHandle_t xMutexAcc;
 
 /*==================[external data definition]===============================*/
 
@@ -226,6 +227,8 @@ static void taskAcc(void *pvParameters)
 	{
 		xSemaphoreTake(xSemINTAcc, portMAX_DELAY);
 
+		xSemaphoreTake(xMutexAcc, portMAX_DELAY);
+
 	    intSource.data = mma8451_read_reg(INT_SOURCE_ADDRESS);
 
 	    if (intSource.SRC_DRDY)
@@ -254,6 +257,8 @@ static void taskAcc(void *pvParameters)
 	        }
 	    }
 
+	    xSemaphoreGive(xMutexAcc);
+
 	    PORT_SetPinInterruptConfig(INT1_PORT, INT1_PIN, kPORT_InterruptLogicZero);
 	}
 }
@@ -264,6 +269,10 @@ void mma8451_init(void)
     CTRL_REG1_t ctrl_reg1;
     CTRL_REG4_t ctrl_reg4;
     CTRL_REG5_t ctrl_reg5;
+
+    xMutexAcc = xSemaphoreCreateMutex();
+
+    xSemaphoreTake(xMutexAcc, 0);
 
 	ctrl_reg4.INT_EN_DRDY = 1;
 	ctrl_reg4.INT_EN_FF_MT = 0;
@@ -302,6 +311,8 @@ void mma8451_init(void)
     /* verificación */
     ctrl_reg1.data = mma8451_read_reg(CTRL_REG1_ADDRESS);
 
+    xSemaphoreGive(xMutexAcc);
+
     xSemINTAcc = xSemaphoreCreateBinary();
 
     xSemaphoreTake(xSemINTAcc, 0);
@@ -315,6 +326,8 @@ void mma8451_setDataRate(DR_enum rate)
 {
     CTRL_REG1_t ctr_reg1;
     bool estAct;
+
+    xSemaphoreTake(xMutexAcc, portMAX_DELAY);
 
     /* antes de modificar data rate es necesario poner ACTIVE = 0 */
     ctr_reg1.data = mma8451_read_reg(CTRL_REG1_ADDRESS);
@@ -333,6 +346,8 @@ void mma8451_setDataRate(DR_enum rate)
 
 	/* verificación */
 	ctr_reg1.data = mma8451_read_reg(0x2a);
+
+	xSemaphoreGive(xMutexAcc);
 }
 
 int16_t mma8451_getAcX(void)
@@ -342,7 +357,7 @@ int16_t mma8451_getAcX(void)
 
 void PORTC_PORTD_IRQHandler(void)
 {
-	BaseType_t xHigherPriorityTaskWoken;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     xSemaphoreGiveFromISR( xSemINTAcc, &xHigherPriorityTaskWoken );
 
