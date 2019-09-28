@@ -126,8 +126,8 @@ int32_t uart_rtos_recDatos(uint8_t *pBuf, int32_t size, uint32_t blockTime)
 
     /* ATENCIÓN CORREGIR ERROR */
 
-    while (xQueueReceive( qRecv, &pBuf[ret], waitTick) == pdTRUE &&
-    		ret < size)
+    while ((ret < size) &&
+           (xQueueReceive( qRecv, &pBuf[ret], waitTick) == pdTRUE) )
     {
     	ret++;
     	waitTick = 0;
