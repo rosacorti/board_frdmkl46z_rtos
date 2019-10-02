@@ -43,7 +43,13 @@
 #include "pin_mux.h"
 
 /*==================[macros and definitions]=================================*/
-
+typedef enum
+{
+    TICK_HEART_1 = 0,
+	TICK_HEART_2,
+	TICK_HEART_3,
+	TICK_HEART_4
+}estheart_enum;
 /*==================[internal data declaration]==============================*/
 static const board_gpioInfo_type board_gpioLeds[] =
 {
@@ -60,7 +66,8 @@ static const board_gpioInfo_type board_gpioSw[] =
 /*==================[internal functions declaration]=========================*/
 
 /*==================[internal data definition]===============================*/
-
+int contador = 0;
+int contador_heart =0;
 /*==================[external data definition]===============================*/
 
 /*==================[internal functions definition]==========================*/
@@ -147,6 +154,13 @@ void board_setLed(board_ledId_enum id, board_ledMsg_enum msg)
         case BOARD_LED_MSG_TOGGLE:
         	GPIO_PortToggle(board_gpioLeds[id].gpio, 1<<board_gpioLeds[id].pin);
             break;
+        case BOARD_LED_MSG_BLINKY:
+               	vBlinky(id);
+
+             break;
+        case BOARD_LED_MSG_HEARTBEAT:
+               	vHeart(id);
+            break;
 
         default:
             break;
@@ -156,6 +170,62 @@ void board_setLed(board_ledId_enum id, board_ledMsg_enum msg)
 bool board_getSw(board_swId_enum id)
 {
     return !GPIO_ReadPinInput(board_gpioSw[id].gpio, board_gpioSw[id].pin);
+}
+
+// funciones agregadas para blinky y beat heart
+void vBlinky(board_ledId_enum idLed)
+{
+if( contador < 300)
+	contador ++;
+	else {contador = 0;
+	board_setLed(idLed,  BOARD_LED_MSG_TOGGLE);
+	}
+}
+
+void vHeart(board_ledId_enum idLed)
+{
+	static estheart_enum estado_heart;
+
+	switch(estado_heart)
+	 	        {
+	            case TICK_HEART_1:
+
+	            	if( contador_heart < 200)
+	            		contador_heart ++;
+	            		else {contador_heart = 0;
+	            		board_setLed(idLed, BOARD_LED_MSG_OFF);
+	            		estado_heart = TICK_HEART_2;
+	            		}
+	                break;
+	            case TICK_HEART_2:
+	            	if( contador_heart < 200)
+	            		contador_heart ++;
+	            		else {contador_heart = 0;
+	            		board_setLed(idLed, BOARD_LED_MSG_ON);
+	            		estado_heart = TICK_HEART_3;
+	            		}
+	                break;
+	            case TICK_HEART_3:
+	            	if( contador_heart < 200)
+	            		contador_heart ++;
+	            		else {contador_heart = 0;
+	            		board_setLed(idLed, BOARD_LED_MSG_OFF);
+	            		estado_heart = TICK_HEART_4;
+	            		}
+	                break;
+	            case TICK_HEART_4:
+	            	if( contador_heart < 800)
+	            		contador_heart ++;
+	            		else {contador_heart = 0;
+	            		board_setLed(idLed, BOARD_LED_MSG_ON);
+	            		estado_heart = TICK_HEART_1;
+	            		}
+	                break;
+	            default:
+	            		estado_heart = TICK_HEART_1;
+	                          break;
+	 	        }
+
 }
 
 /*==================[end of file]============================================*/
